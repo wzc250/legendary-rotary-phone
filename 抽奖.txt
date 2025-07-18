@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QQ自动抽奖小程序</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #FF5722;
+            text-align: center;
+        }
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px 0;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        input, select {
+            padding: 8px;
+            margin: 5px 0;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .prize-item {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .prize-item input {
+            flex: 1;
+            margin-right: 10px;
+        }
+        .winner-list {
+            margin-top: 20px;
+        }
+        .winner-item {
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #e8f5e9;
+            border-radius: 5px;
+        }
+        #addPrize {
+            background-color: #2196F3;
+        }
+        #addPrize:hover {
+            background-color: #0b7dda;
+        }
+        #drawButton {
+            background-color: #FF5722;
+            width: 100%;
+            padding: 12px;
+            font-size: 18px;
+        }
+        #drawButton:hover {
+            background-color: #e64a19;
+        }
+        .admin-section {
+            border: 2px solid #FF5722;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .admin-label {
+            color: #FF5722;
+            font-weight: bold;
+        }
+        #userInfo {
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>QQ自动抽奖小程序</h1>
+        
+        <div id="userInfo">正在获取您的信息...</div>
+        
+        <div id="adminSection" class="admin-section hidden">
+            <h2 class="admin-label">管理员设置</h2>
+            <div id="prizesContainer">
+                <div class="prize-item">
+                    <input type="text" placeholder="奖项名称" class="prize-name">
+                    <input type="number" placeholder="奖品数量" class="prize-count" min="1" value="1">
+                </div>
+            </div>
+            <button id="addPrize">添加奖项</button>
+            <button id="drawButton">开始抽奖</button>
+        </div>
+        
+        <div class="section">
+            <h2>抽奖信息</h2>
+            <div id="lotteryInfo">等待抽奖开始...</div>
+        </div>
+        
+        <div class="section winner-list">
+            <h2>中奖名单</h2>
+            <div id="winnersContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        // 管理员密码（简单演示用，实际应用中应该使用更安全的方式）
+        const ADMIN_PASSWORD = "admin123";
+        
+        // 生成用户唯一ID
+        function generateUserId() {
+            return 'user-' + Math.random().toString(36).substr(2, 9);
+        }
+        
+        // 获取或创建用户ID
+        function getOrCreateUserId() {
+            let userId = localStorage.getItem('qqLotteryUserId');
+            if (!userId) {
+                userId = generateUserId();
+                localStorage.setItem('qqLotteryUserId', userId);
+            }
+            return userId;
+        }
+        
+        // 获取用户名（使用QQ昵称或随机名称）
+        function getUserName() {
+            // 在实际应用中，可以通过QQ API获取用户昵称
+            // 这里使用localStorage存储的用户名或随机名称
+            let userName = localStorage.getItem('qqLotteryUserName');
+            if (!userName) {
+                userName = "用户" + Math.floor(Math.random() * 10000);
+                localStorage.setItem('qqLotteryUserName', userName);
+            }
+            return userName;
+        }
+        
+        // 检查是否是管理员
+        function checkAdmin() {
+            return localStorage.getItem('qqLotteryIsAdmin') === 'true';
+        }
+        
+        // 初始化用户信息
+        function initUserInfo() {
+            const userId = getOrCreateUserId();
+            const userName = getUserName();
+            const isAdmin = checkAdmin();
+            
+            document.getElementById('userInfo').textContent = `您好: ${userName} (${isAdmin ? '管理员' : '参与者'})`;
+            
+            if (isAdmin) {
+                document.getElementById('adminSection').classList.remove('hidden');
+            }
+            
+            // 自动加入参与者列表
+            addParticipant(userId, userName);
+        }
+        
+        // 添加参与者到列表
+        function addParticipant(userId, userName) {
+            let participants = JSON.parse(localStorage.getItem('qqLotteryParticipants') || '{}');
+            if (!participants[userId]) {
+                participants[userId] = userName;
+                localStorage.setItem('qqLotteryParticipants', JSON.stringify(participants));
+                updateLotteryInfo();
+            }
+        }
+        
+        // 更新抽奖信息显示
+        function updateLotteryInfo() {
+            const participants = JSON.parse(localStorage.getItem('qqLotteryParticipants') || '{}');
+            const prizes = JSON.parse(localStorage.getItem('qqLotteryPrizes') || '[]');
+            
+            let infoHtml = `
+                <p>当前参与者数量: ${Object.keys(participants).length}人</p>
+            `;
+            
+            if (prizes.length > 0) {
+                infoHtml += `<p>已设置奖项:</p><ul>`;
+                prizes.forEach(prize => {
+                    infoHtml += `<li>${prize.name} (${prize.count}名)</li>`;
+                });
+                infoHtml += `</ul>`;
+            }
+            
+            document.getElementById('lotteryInfo').innerHTML = infoHtml;
+        }
+        
+        // 添加奖项
+        document.getElementById('addPrize').addEventListener('click', function() {
+            const container = document.getElementById('prizesContainer');
+            const newPrize = document.createElement('div');
+            newPrize.className = 'prize-item';
+            newPrize.innerHTML = `
+                <input type="text" placeholder="奖项名称" class="prize-name">
+                <input type="number" placeholder="奖品数量" class="prize-count" min="1" value="1">
+            `;
+            container.appendChild(newPrize);
+        });
+        
+        // 抽奖功能
+        document.getElementById('drawButton').addEventListener('click', function() {
+            if (!checkAdmin()) {
+                alert('只有管理员可以执行此操作！');
+                return;
+            }
+            
+            // 获取所有奖项
+            const prizeItems = document.querySelectorAll('.prize-item');
+            const prizes = [];
+            prizeItems.forEach(item => {
+                const name = item.querySelector('.prize-name').value;
+                const count = parseInt(item.querySelector('.prize-count').value) || 1;
+                if (name) {
+                    prizes.push({name, count});
+                }
+            });
+            
+            if (prizes.length === 0) {
+                alert('请至少设置一个奖项！');
+                return;
+            }
+            
+            // 保存奖项设置
+            localStorage.setItem('qqLotteryPrizes', JSON.stringify(prizes));
+            
+            // 获取参与者
+            const participants = JSON.parse(localStorage.getItem('qqLotteryParticipants') || '{}');
+            const participantList = Object.entries(participants);
+            
+            if (participantList.length === 0) {
+                alert('暂无参与者！');
+                return;
+            }
+            
+            // 检查参与者数量是否足够
+            const totalPrizes = prizes.reduce((sum, prize) => sum + prize.count, 0);
+            if (participantList.length < totalPrizes) {
+                alert('参与者数量不足，无法抽取所有奖项！');
+                return;
+            }
+            
+            // 开始抽奖
+            const winnersContainer = document.getElementById('winnersContainer');
+            winnersContainer.innerHTML = '';
+            
+            // 复制参与者数组用于抽奖
+            let remainingParticipants = [...participantList];
+            const allWinners = [];
+            
+            prizes.forEach(prize => {
+                const prizeWinners = [];
+                
+                for (let i = 0; i < prize.count; i++) {
+                    if (remainingParticipants.length === 0) break;
+                    
+                    // 随机选择中奖者
+                    const randomIndex = Math.floor(Math.random() * remainingParticipants.length);
+                    const [winnerId, winnerName] = remainingParticipants[randomIndex];
+                    prizeWinners.push(winnerName);
+                    
+                    // 从剩余参与者中移除中奖者
+                    remainingParticipants.splice(randomIndex, 1);
+                    
+                    // 记录中奖者信息
+                    allWinners.push({
+                        prize: prize.name,
+                        name: winnerName,
+                        id: winnerId
+                    });
+                }
+                
+                if (prizeWinners.length > 0) {
+                    const winnerElement = document.createElement('div');
+                    winnerElement.className = 'winner-item';
+                    winnerElement.innerHTML = `
+                        <strong>${prize.name}:</strong> ${prizeWinners.join('、')}
+                    `;
+                    winnersContainer.appendChild(winnerElement);
+                }
+            });
+            
+            // 保存中奖结果
+            localStorage.setItem('qqLotteryWinners', JSON.stringify(allWinners));
+            updateLotteryInfo();
+        });
+        
+        // 显示中奖结果
+        function displayWinners() {
+            const winners = JSON.parse(localStorage.getItem('qqLotteryWinners') || '[]');
+            const winnersContainer = document.getElementById('winnersContainer');
+            
+            if (winners.length === 0) {
+                winnersContainer.innerHTML = '<p>暂无中奖信息</p>';
+                return;
+            }
+            
+            // 按奖项分组
+            const prizeGroups = {};
+            winners.forEach(winner => {
+                if (!prizeGroups[winner.prize]) {
+                    prizeGroups[winner.prize] = [];
+                }
+                prizeGroups[winner.prize].push(winner.name);
+            });
+            
+            winnersContainer.innerHTML = '';
+            Object.entries(prizeGroups).forEach(([prize, names]) => {
+                const winnerElement = document.createElement('div');
+                winnerElement.className = 'winner-item';
+                winnerElement.innerHTML = `
+                    <strong>${prize}:</strong> ${names.join('、')}
+                `;
+                winnersContainer.appendChild(winnerElement);
+            });
+        }
+        
+        // 管理员登录
+        function adminLogin() {
+            const password = prompt('请输入管理员密码:');
+            if (password === ADMIN_PASSWORD) {
+                localStorage.setItem('qqLotteryIsAdmin', 'true');
+                alert('管理员登录成功！');
+                location.reload();
+            } else if (password !== null) {
+                alert('密码错误！');
+            }
+        }
+        
+        // 初始化页面
+        window.addEventListener('DOMContentLoaded', function() {
+            initUserInfo();
+            updateLotteryInfo();
+            displayWinners();
+            
+            // 添加右键菜单（管理员登录）
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                adminLogin();
+            });
+        });
+    </script>
+</body>
+</html>
