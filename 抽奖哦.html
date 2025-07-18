@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QQ抽奖助手</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 15px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        header {
+            background: linear-gradient(to right, #ff416c, #ff4b2b);
+            color: white;
+            padding: 20px 15px;
+            text-align: center;
+            position: relative;
+        }
+        
+        header h1 {
+            font-size: 1.7rem;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            line-height: 1.3;
+        }
+        
+        header p {
+            font-size: 0.95rem;
+            opacity: 0.9;
+        }
+        
+        .user-info {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            font-weight: bold;
+            color: #ff4b2b;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .user-info span {
+            padding: 4px 12px;
+            background: #e9ecef;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .section {
+            padding: 18px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .section-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            color: #ff416c;
+        }
+        
+        .section-title h2 {
+            font-size: 1.35rem;
+        }
+        
+        .admin-section {
+            border: 3px solid #ff416c;
+            border-radius: 12px;
+            padding: 18px;
+            margin: 15px 0;
+            background: #fff9f9;
+        }
+        
+        .admin-label {
+            background: #ff416c;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .prize-item {
+            display: flex;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+        
+        .prize-item input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            background: #fff;
+        }
+        
+        .prize-item input:focus {
+            border-color: #ff416c;
+            outline: none;
+        }
+        
+        .btn {
+            background: linear-gradient(to right, #ff416c, #ff4b2b);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(255, 65, 108, 0.3);
+            width: 100%;
+            margin-top: 10px;
+            font-size: 1.05rem;
+        }
+        
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 8px rgba(255, 65, 108, 0.3);
+        }
+        
+        #addPrize {
+            background: linear-gradient(to right, #38ef7d, #11998e);
+            box-shadow: 0 4px 12px rgba(56, 239, 125, 0.3);
+        }
+        
+        #drawButton {
+            background: linear-gradient(to right, #ff9966, #ff5e62);
+            padding: 16px;
+            font-size: 1.15rem;
+            margin-top: 15px;
+            box-shadow: 0 4px 12px rgba(255, 94, 98, 0.3);
+        }
+        
+        .winner-list {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .winner-item {
+            padding: 14px;
+            margin: 12px 0;
+            background: linear-gradient(to right, #e0f7fa, #bbdefb);
+            border-radius: 12px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .winner-item strong {
+            color: #ff5e62;
+            font-size: 1.1rem;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 14px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+            font-size: 0.95rem;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .instructions {
+            background: #fff8e1;
+            border-left: 4px solid #ffc107;
+            padding: 14px;
+            border-radius: 0 8px 8px 0;
+            margin-top: 15px;
+            font-size: 0.85rem;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .counter {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            margin: 15px 0;
+            gap: 10px;
+        }
+        
+        .counter-item {
+            background: #f0f4ff;
+            padding: 14px 10px;
+            border-radius: 12px;
+            flex: 1;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+        }
+        
+        .counter-item h3 {
+            color: #5e72e4;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        
+        .counter-item .number {
+            font-size: 1.7rem;
+            font-weight: bold;
+            color: #ff5e62;
+            line-height: 1.2;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 15px;
+            color: #6c757d;
+            font-size: 0.8rem;
+            background: #f8f9fa;
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            z-index: 1000;
+            animation: fadeInOut 2.5s;
+            display: none;
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; top: 10px; }
+            10% { opacity: 1; top: 20px; }
+            90% { opacity: 1; top: 20px; }
+            100% { opacity: 0; top: 10px; }
+        }
+        
+        .error-message {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 12px;
+            border-radius: 0 8px 8px 0;
+            margin: 10px 0;
+            color: #d32f2f;
+            font-size: 0.9rem;
+            display: none;
+        }
+        
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .section {
+                padding: 15px 12px;
+            }
+            
+            .prize-item {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .counter {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .btn {
+                padding: 15px 20px;
+            }
+        }
+        
+        .icon {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div class="toast" id="toast"></div>
+    
+    <div class="container">
+        <header>
+            <h1>🎉 QQ抽奖助手</h1>
+            <p>打开即参与，公平透明</p>
+        </header>
+        
+        <div class="user-info">
+            <span id="userName">加载中...</span>
+            <span id="userRole">参与者</span>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">
+                <h2>📊 抽奖统计</h2>
+            </div>
+            
+            <div class="counter">
+                <div class="counter-item">
+                    <h3>👥 参与者</h3>
+                    <div class="number" id="participantCount">0</div>
+                </div>
+                <div class="counter-item">
+                    <h3>🏆 奖项数</h3>
+                    <div class="number" id="prizeCount">0</div>
+                </div>
+                <div class="counter-item">
+                    <h3>🎁 奖品数</h3>
+                    <div class="number" id="awardCount">0</div>
+                </div>
+            </div>
+            
+            <div class="info-box">
+                <p>✅ 您已自动加入抽奖活动！中奖结果将在抽奖结束后公布。</p>
+            </div>
+            
+            <div class="error-message" id="errorMessage"></div>
+        </div>
+        
+        <div id="adminSection" class="section hidden">
+            <div class="section-title">
+                <h2>👑 管理员控制面板</h2>
+            </div>
+            
+            <div class="admin-section">
+                <span class="admin-label">🔒 奖项设置</span>
+                
+                <div id="prizesContainer">
+                    <div class="prize-item">
+                        <input type="text" placeholder="一等奖（如：iPhone 15）" class="prize-name" value="一等奖">
+                        <input type="number" placeholder="数量" class="prize-count" min="1" value="1">
+                    </div>
+                    <div class="prize-item">
+                        <input type="text" placeholder="二等奖（如：AirPods Pro）" class="prize-name" value="二等奖">
+                        <input type="number" placeholder="数量" class="prize-count" min="1" value="2">
+                    </div>
+                </div>
+                
+                <button id="addPrize" class="btn">➕ 添加奖项</button>
+                <button id="drawButton" class="btn">🎲 开始抽奖</button>
+            </div>
+            
+            <div class="instructions">
+                <p>ℹ️ 提示：抽奖将随机从所有参与者中抽取中奖者，每个参与者只能中奖一次。</p>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">
+                <h2>🏅 中奖名单</h2>
+            </div>
+            
+            <div class="winner-list" id="winnersContainer">
+                <div class="winner-item">
+                    <strong>等待开奖...</strong> 
+                    <p>抽奖结束后将在此处公布中奖名单</p>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>💡 提示：长按页面可登录管理员账号 | 默认密码：admin123</p>
+        </footer>
+    </div>
+
+    <script>
+        // 管理员密码
+        const ADMIN_PASSWORD = "admin123";
+        
+        // 显示Toast提示
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+            
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 2500);
+        }
+        
+        // 显示错误信息
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            
+            // 5秒后自动隐藏
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+            }, 5000);
+        }
+        
+        // 生成用户唯一ID
+        function generateUserId() {
+            return 'user-' + Math.random().toString(36).substr(2, 9);
+        }
+        
+        // 获取或创建用户ID
+        function getOrCreateUserId() {
+            let userId = localStorage.getItem('qqLotteryUserId');
+            if (!userId) {
+                userId = generateUserId();
+                localStorage.setItem('qqLotteryUserId', userId);
+            }
+            return userId;
+        }
+        
+        // 获取用户名
+        function getUserName() {
+            let userName = localStorage.getItem('qqLotteryUserName');
+            if (!userName) {
+                // 生成有趣的随机用户名
+                const adjectives = ['快乐', '聪明', '幸运', '勇敢', '阳光', '机智', '魅力', '无敌'];
+                const nouns = ['熊猫', '老虎', '狮子', '海豚', '猎豹', '凤凰', '巨龙', '麒麟'];
+                const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+                const noun = nouns[Math.floor(Math.random() * nouns.length)];
+                userName = adj + noun + Math.floor(Math.random() * 1000);
+                localStorage.setItem('qqLotteryUserName', userName);
+            }
+            return userName;
+        }
+        
+        // 检查是否是管理员
+        function checkAdmin() {
+            return localStorage.getItem('qqLotteryIsAdmin') === 'true';
+        }
+        
+        // 初始化用户信息
+        function initUserInfo() {
+            try {
+                const userId = getOrCreateUserId();
+                const userName = getUserName();
+                const isAdmin = checkAdmin();
+                
+                document.getElementById('userName').textContent = userName;
+                document.getElementById('userRole').textContent = isAdmin ? '管理员' : '参与者';
+                document.getElementById('userRole').style.background = isAdmin ? '#ff416c' : '#38ef7d';
+                document.getElementById('userRole').style.color = 'white';
+                
+                if (isAdmin) {
+                    document.getElementById('adminSection').classList.remove('hidden');
+                }
+                
+                // 自动加入参与者列表
+                addParticipant(userId, userName);
+                updateCounters();
+                displayWinners();
+            } catch (e) {
+                console.error('初始化错误:', e);
+                showError('初始化失败，请刷新页面或更换浏览器');
+            }
+        }
+        
+        // 添加参与者到列表
+        function addParticipant(userId, userName) {
+            try {
+                let participants = JSON.parse(localStorage.getItem('qqLotteryParticipants') || '{}');
+                if (!participants[userId]) {
+                    participants[userId] = userName;
+                    localStorage.setItem('qqLotteryParticipants', JSON.stringify(participants));
+                    updateCounters();
+                }
+            } catch (e) {
+                console.error('添加参与者失败:', e);
+                showError('无法添加参与者，请检查浏览器设置');
+            }
+        }
+        
+        // 更新计数器
+        function updateCounters() {
+            try {
+                const participants = JSON.parse(localStorage.getItem('qqLotteryParticipants') || '{}');
+                const prizes = JSON.parse(localStorage.getItem('qqLotteryPrizes') || '[]');
+                
+                document.getElementById('participantCount').textContent = Object.keys(participants).length;
+                document.getElementById('prizeCount').textContent = prizes.length;
+                
+                const awardCount = prizes.reduce((sum, prize) => sum + (prize.count || 1), 0);
+                document.getElementById('awardCount').textContent = awardCount;
+            } catch (e) {
+                console.error('更新计数器失败:', e);
+            }
+        }
+        
+        // 添加奖项
+        document.getElementById('addPrize').addEventListener('click', function() {
+            const container = document.getElementById('prizesContainer');
+            const newPrize = document.createElement('div');
+            newPrize.className = 'prize-item';
+            newPrize.innerHTML = `
+                <input type="text" placeholder="奖项名称" class="prize-name">
+                <input type="number" placeholder="数量" class="prize-count" min="1" value="1">
+            `;
+            container.appendChild(newPrize);
+            showToast('已添加一个新奖项');
+        });
+        
+        // 抽奖功能
+        document.getElementById('drawButton').addEventListener('click', function() {
+            if (!checkAdmin()) {
+                showToast('只有管理员可以抽奖');
+                return;
+            }
+            
+            // 获取所有奖项
+            const prizeItems = document.querySelectorAll('.prize-item');
+            const prizes = [];
+            prizeItems.forEach(item => {
+                const name = item.querySelector('.prize-name').value;
+                const count = parseInt(item.querySelector('.prize-count').value) || 1;
+                if (name) {
+                    prizes.push({name, count});
+                }
+            });
+            
+            if (prizes.length === 0) {
+                showError('请至少设置一个奖项！');
+                return;
+            }
+            
+            // 保存奖项设置
+            localStorage.setItem('qqLotteryPrizes', JSON.stringify(prizes));
+            showToast('奖项设置已保存');
+            
+            // 获取参与者
+            let participants = {};
+            try {
+                participants = JSON.parse(localStorage.getItem('qqLotteryParticipants') || {};
+            } catch (e) {
+                showError('无法获取参与者数据');
+                return;
+            }
+            
+            const participantList = Object.entries(participants);
+            
+            if (participantList.length === 0) {
+                showError('暂无参与者，无法抽奖');
+                return;
+            }
+            
+            // 检查参与者数量是否足够
+            const totalPrizes = prizes.reduce((sum, prize) => sum + prize.count, 0);
+            if (participantList.length < totalPrizes) {
+                showError(`参与者不足: ${participantList.length}人 < 奖品${totalPrizes}个`);
+                return;
+            }
+            
+            // 开始抽奖
+            const winnersContainer = document.getElementById('winnersContainer');
+            winnersContainer.innerHTML = '';
+            
+            // 复制参与者数组用于抽奖
+            let remainingParticipants = [...participantList];
+            const allWinners = [];
+            
+            prizes.forEach(prize => {
+                const prizeWinners = [];
+                
+                for (let i = 0; i < prize.count; i++) {
+                    if (remainingParticipants.length === 0) break;
+                    
+                    // 随机选择中奖者
+                    const randomIndex = Math.floor(Math.random() * remainingParticipants.length);
+                    const [winnerId, winnerName] = remainingParticipants[randomIndex];
+                    prizeWinners.push(winnerName);
+                    
+                    // 从剩余参与者中移除中奖者
+                    remainingParticipants.splice(randomIndex, 1);
+                    
+                    // 记录中奖者信息
+                    allWinners.push({
+                        prize: prize.name,
+                        name: winnerName,
+                        id: winnerId
+                    });
+                }
+                
+                if (prizeWinners.length > 0) {
+                    const winnerElement = document.createElement('div');
+                    winnerElement.className = 'winner-item';
+                    winnerElement.innerHTML = `
+                        <strong>${prize.name}:</strong> ${prizeWinners.join('、')}
+                    `;
+                    winnersContainer.appendChild(winnerElement);
+                }
+            });
+            
+            // 保存中奖结果
+            localStorage.setItem('qqLotteryWinners', JSON.stringify(allWinners));
+            updateCounters();
+            
+            // 显示抽奖完成消息
+            const winnerTitle = document.createElement('div');
+            winnerTitle.className = 'winner-item';
+            winnerTitle.style.background = 'linear-gradient(to right, #ffecd2, #fcb69f)';
+            winnerTitle.innerHTML = '<strong>🎉 抽奖已完成！恭喜所有中奖者！</strong>';
+            winnersContainer.insertBefore(winnerTitle, winnersContainer.firstChild);
+            
+            showToast('抽奖完成！结果已公布');
+        });
+        
+        // 显示中奖结果
+        function displayWinners() {
+            try {
+                const winners = JSON.parse(localStorage.getItem('qqLotteryWinners') || '[]';
+                const winnersContainer = document.getElementById('winnersContainer');
+                
+                if (winners.length === 0) {
+                    winnersContainer.innerHTML = '<div class="winner-item"><strong>等待开奖...</strong><p>抽奖结束后将在此处公布中奖名单</p></div>';
+                    return;
+                }
+                
+                // 按奖项分组
+                Const prizeGroups = {};
+                winners.foreach(winner => {
+                    如果 (!prizeGroups[winner.奖]) {
+                        prizeGroups[winner.奖] = [];
+                    }
+                    prizeGroups[winner.奖].push(winner.name);
+                });
+                
+                winnersContainer.innerHTML = '';
+                
+                // 添加标题
+                Const winnerTitle = document.createElement('div');
+                winnerTitle.className = 'winner-item';
+                winnerTitle.style.background = 'linear-gradient(to right, #ffecd2, #fcb69f)';
+                winnerTitle.innerHTML = '<strong>🏆 中奖名单公布</strong>';
+                winnersContainer.appendChild(winnerTitle);
+                
+// 添加中奖信息
+对象。参赛作品(prizeGroups)。为([每个([[奖品、名称])对象。参赛作品(prizeGroups)。为([每个([[奖品、名称])对象。参赛作品(prizeGroups)。为([每个([[奖品、名称])=>{])=>{([每一个([奖品、名称]){])=>{([每一个([奖品、名称])=>{])=>=>{])=>{([每一个([奖品、名称])=>{])=>{{])=>{([每一个([奖品、名称])=>{])=>{([奖品、名称])=>{])=>{([每一个([奖品、名称])=>{])=>{{([每一个([奖品、名称])=>{])=>{([奖品、名称])=>{])=>{([每一个([奖品、名称])=>{])=>{{])=>{([每一个([奖品、名称])=>{])=>{([奖品、名称])=>{])=>{([每一个([奖品、名称])=>{])=>{{([每一个([奖品、名称]){])(奖品组)。为([每个([[奖品、名称])=>{])=>{([每一个([奖品、名称]){])=>{([每一个([奖品、名称])=>{])=>=>{])=>{([每一个([奖品、名称])=>{])=>{{])=>{([每一个([奖品、名称])=>{])=>{([奖品、名称])=>{])=>{([每一个([奖品、名称])=>{])=>{{([每一个([奖品、名称])=>{])=>{([奖品、名称])=>{])=>{([每一个([奖品、名称])=>{])=>{{])=>{([每一个([奖品、名称])=>{])=>{([奖品、名称])=>{])=>{([每一个([奖品、名称])=>{])=>{{([每一个([奖品、名称]){])=>{(])(])(])(])=>{])]){])])=>{([每一个([奖品、名称])=>{])=>=>{])=>=>{])=>{([每一个([奖品、名称])=>{])=>{{])=>{([每一个([奖品、名称])=>{])=>{([奖品、名称])=>{])=>{([每一个([奖品、名称])=>{])=>{{([每一个([奖品、名称])=>{])=>{([奖品、名称])=>{])=>{([每一个([奖品、名称])=>{])=>{{])=>{([每一个([奖品、名称])=>{])=>{([奖品、名称])=>{])=>{([每一个([奖品、名称])=>{])=>{{([每一个([奖品、名称])=>{])=>{([奖品、名称])=>{])=>{([每一个([奖品、名称])=>{])=>{{])=>{([每一个([奖品、名称])=>{])=>{([奖品、名称])=>{])=>{([每一个([奖品、名称])=>{])=>{{([每一个([奖品、名称])=>{])=>{([奖品、名称])=>{])=>{([每一个([奖品、名称])=>{])=>{{])=>{([每一个([奖品、名称])=>{])=>{([奖品、名称])=>{])=>{([每一个([奖品、名称])=>{])=>{
+constConstwinnerElementconstConstwinnerElement=文档。createElement('div')；createElement('div')；createElement('div')；createElement('div')；文档。createElement('div')；createElement('div')；createElement('div')；createElement('div')；
+.className='winner-item'；'winner-item'；
+winnerElement.innerHTML="
+<强大的>${奖}：</strong>${names.join('、')}强大的>${奖}：</strong>${个名称。参加('、')}
+`;
+赢家集装箱。appendChild(winnerElement)；(winnerElement)；
+                });
+}渔获物(e){
+控制台。误差('显示中奖名单失败：'，e)；('显示中奖名单失败：'，e)；
+赢家集装箱。innerHTML='<div class="winner-item"><strong>数据错误</strong><p>无法加载中奖名单，请重新抽奖</p></div>'；'<div班级="winner-item"><strong>数据错误</strong><p>无法加载中奖名单，请重新抽奖</p></div>'；
+            }
+        }
+        
+// 管理员登录
+函数adminLogin(){
+常量密码=提示符('请输入管理员密码：')；
+如果(密码===admin_PASSWORD){(密码===admin_PASSWORD){
+localStoragelocalStorage。setitem('"QLotteryIsAdmin'，'true')；('"QLotteryIsAdmin'，'true')；
+showToast('管理员登录成功！页面刷新中...')；('管理员登录成功！页面刷新中...
+setTimeout(()=>{
+位置。 重载()；()；
+}, 1500);
+}}其他 如果(密码！ ==空){(密码！ ==空){
+showToast('密码错误！')；
+            }
+        }
+        
+// 初始化页面
+窗户。addEventListener('DOMContentLoaded'，函数(){('DOMContentLoaded'，函数(){
+// 初始化
+initUserInfo()；
+            
+// 添加长按事件（手机端管理员登录）
+让按下计时器；
+文件。身体.addEventListener('touchstart'，函数(e){addEventListener('touchstart'，函数(e){
+pressTimer=setTimeout(函数(){
+adminLogin()；
+}, 1000); // 长按1秒
+            });
+            
+文件。身体。addEventListener('触摸'，函数(){('触摸'，函数(){
+clearTimeout(按计时器)；
+            });
+            
+// 右键事件（电脑端）
+文件。addEventListener('contextmenu'，函数(e){
+e.preventDefaultpreventDefault()；
+adminLogin()；
+            });
+        });
+  </脚本>
+</身体>
+</超文本标记语言>
