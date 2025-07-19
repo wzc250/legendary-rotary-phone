@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QQ抽奖助手 - 实时同步版</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a2980, #26d0ce);
+            color: #333;
+            line-height: 1.6;
+            padding: 15px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            position: relative;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        header {
+            background: linear-gradient(to right, #ff5e62, #ff9966);
+            color: white;
+            padding: 20px 15px;
+            text-align: center;
+            position: relative;
+            border-bottom: 3px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        header p {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        
+        .connection-status {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ff4757;
+        }
+        
+        .status-dot.connected {
+            background: #2ed573;
+        }
+        
+        .user-info {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            font-weight: bold;
+            color: #ff5e62;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .user-info span {
+            padding: 5px 15px;
+            background: #e9ecef;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .section {
+            padding: 20px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .section-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            color: #ff5e62;
+            gap: 10px;
+        }
+        
+        .section-title h2 {
+            font-size: 1.4rem;
+        }
+        
+        .admin-section {
+            border: 3px solid #ff5e62;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            background: #fff9f9;
+            box-shadow: 0 5px 15px rgba(255, 94, 98, 0.1);
+        }
+        
+        .admin-label {
+            background: linear-gradient(to right, #ff5e62, #ff9966);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+            box-shadow: 0 3px 8px rgba(255, 94, 98, 0.3);
+        }
+        
+        .prize-item {
+            display: flex;
+            margin-bottom: 15px;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .prize-item input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background: white;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .prize-item input:focus {
+            border-color: #ff5e62;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 94, 98, 0.2);
+        }
+        
+        .btn {
+            background: linear-gradient(to right, #ff5e62, #ff9966);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(255, 94, 98, 0.3);
+            width: 100%;
+            margin-top: 10px;
+            gap: 8px;
+        }
+        
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 8px rgba(255, 94, 98, 0.3);
+        }
+        
+        #addPrize {
+            background: linear-gradient(to right, #38ef7d, #11998e);
+            box-shadow: 0 4px 12px rgba(56, 239, 125, 0.3);
+        }
+        
+        #drawButton {
+            background: linear-gradient(to right, #ff9966, #ff5e62);
+            padding: 16px;
+            font-size: 1.15rem;
+            margin-top: 15px;
+        }
+        
+        #resetButton {
+            background: linear-gradient(to right, #9e9e9e, #616161);
+        }
+        
+        .winner-list {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .winner-item {
+            padding: 15px;
+            margin: 12px 0;
+            background: linear-gradient(to right, #e0f7fa, #bbdefb);
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .winner-item strong {
+            color: #ff5e62;
+            font-size: 1.1rem;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .counter {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            margin: 20px 0;
+            gap: 15px;
+        }
+        
+        .counter-item {
+            background: linear-gradient(to right, #f0f4ff, #e6e9ff);
+            padding: 18px 10px;
+            border-radius: 15px;
+            flex: 1;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .counter-item h3 {
+            color: #5e72e4;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+        
+        .counter-item .number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ff5e62;
+            line-height: 1.2;
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 30px;
+            z-index: 1000;
+            animation: fadeInOut 3s;
+            display: none;
+            max-width: 90%;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; top: 10px; }
+            10% { opacity: 1; top: 20px; }
+            90% { opacity: 1; top: 20px; }
+            100% { opacity: 0; top: 10px; }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .sync-indicator {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #5e72e4;
+            font-size: 0.85rem;
+            background: rgba(94, 114, 228, 0.1);
+            padding: 5px 12px;
+            border-radius: 20px;
+        }
+        
+        .sync-pulse {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #5e72e4;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+        
+        .participant-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .participant-card {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 0.85rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .room-id-display {
+            background: #fff8e1;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .room-id {
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        
+        .copy-btn {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .join-section {
+            background: #e8f5e9;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        #joinButton {
+            background: linear-gradient(to right, #4caf50, #2e7d32);
+            margin-top: 15px;
+        }
+        
+        .join-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .join-form input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 1rem;
+        }
+        
+        .join-form button {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 0 20px;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+        
+        .tab-container {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: #f0f4ff;
+            border-radius: 10px 10px 0 0;
+            margin-right: 5px;
+        }
+        
+        .tab.active {
+            background: #5e72e4;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @media (max-width: 480px) {
+            .counter {
+                flex-direction: column;
+            }
+            
+            .prize-item {
+                flex-direction: column;
+            }
+            
+            header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .join-form {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="toast" id="toast"></div>
+    
+    <div class="container">
+        <header>
+            <div class="sync-indicator">
+                <div class="sync-pulse"></div>
+                <span>实时同步中</span>
+            </div>
+            
+            <h1><i class="fas fa-sync-alt"></i> QQ实时抽奖助手</h1>
+            <p>所有参与者同步更新抽奖状态</p>
+            
+            <div class="connection-status">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="connectionStatus">未连接</span>
+            </div>
+        </header>
+        
+        <div class="user-info">
+            <span id="userName">未加入</span>
+            <span id="userRole">未加入</span>
+        </div>
+        
+        <div class="section">
+            <div class="tab-container">
+                <div class="tab active" data-tab="create">创建房间</div>
+                <div class="tab" data-tab="join">加入房间</div>
+            </div>
+            
+            <div class="tab-content active" id="createTab">
+                <div class="section-title">
+                    <i class="fas fa-plus-circle"></i>
+                    <h2>创建新抽奖房间</h2>
+                </div>
+                
+                <div class="join-section">
+                    <p>作为管理员创建新的抽奖房间</p>
+                    <button id="createButton" class="btn">
+                        <i class="fas fa-plus"></i> 创建抽奖房间
+                    </button>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="joinTab">
+                <div class="section-title">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <h2>加入抽奖房间</h2>
+                </div>
+                
+                <div class="join-section">
+                    <p>输入房间ID加入已有抽奖房间</p>
+                    <div class="join-form">
+                        <input type="text" id="roomIdInput" placeholder="输入房间ID">
+                        <button id="joinButton">
+                            <i class="fas fa-sign-in-alt"></i> 加入
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="room-id-display" id="roomIdDisplay" style="display: none;">
+                <div>
+                    <i class="fas fa-door-open"></i> 房间ID: 
+                    <span class="room-id" id="roomId">XXXX-XXXX</span>
+                </div>
+                <button class="copy-btn" id="copyRoomId">
+                    <i class="fas fa-copy"></i> 复制
+                </button>
+            </div>
+        </div>
+        
+        <div id="adminSection" class="section hidden">
+            <div class="section-title">
+                <i class="fas fa-crown"></i>
+                <h2>管理员控制面板</h2>
+            </div>
+            
+            <div class="admin-section">
+                <span class="admin-label"><i class="fas fa-lock"></i> 奖项设置</span>
+                
+                <div id="prizesContainer">
+                    <div class="prize-item">
+                        <input type="text" placeholder="一等奖（如：iPhone 15）" class="prize-name" value="一等奖">
+                        <input type="number" placeholder="数量" class="prize-count" min="1" value="1">
+                    </div>
+                    <div class="prize-item">
+                        <input type="text" placeholder="二等奖（如：AirPods Pro）" class="prize-name" value="二等奖">
+                        <input type="number" placeholder="数量" class="prize-count" min="1" value="2">
+                    </div>
+                </div>
+                
+                <button id="addPrize" class="btn"><i class="fas fa-plus"></i> 添加奖项</button>
+                <button id="resetButton" class="btn"><i class="fas fa-redo"></i> 重置抽奖</button>
+                <button id="drawButton" class="btn"><i class="fas fa-dice"></i> 开始抽奖</button>
+            </div>
+        </div>
+        
+        <div id="statsSection" class="section hidden">
+            <div class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                <h2>实时抽奖统计</h2>
+            </div>
+            
+            <div class="counter">
+                <div class="counter-item">
+                    <h3><i class="fas fa-users"></i> 参与者</h3>
+                    <div class="number" id="participantCount">0</div>
+                </div>
+                <div class="counter-item">
+                    <h3><i class="fas fa-trophy"></i> 奖项数</h3>
+                    <div class="number" id="prizeCount">0</div>
+                </div>
+                <div class="counter-item">
+                    <h3><i class="fas fa-gift"></i> 奖品数</h3>
+                    <div class="number" id="awardCount">0</div>
+                </div>
+            </div>
+            
+            <div class="participant-grid" id="participantGrid">
+                <!-- 参与者卡片将通过JS动态添加 -->
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">
+                <i class="fas fa-award"></i>
+                <h2>实时中奖名单</h2>
+            </div>
+            
+            <div class="winner-list" id="winnersContainer">
+                <div class="winner-item">
+                    <strong><i class="fas fa-hourglass-half"></i> 等待开奖...</strong> 
+                    <p>加入房间并开始抽奖后显示结果</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">
+                <i class="fas fa-info-circle"></i>
+                <h2>使用说明</h2>
+            </div>
+            <div style="padding: 10px; font-size: 0.9rem; line-height: 1.7;">
+                <p><strong>管理员：</strong></p>
+                <p>1. 点击"创建抽奖房间"成为管理员</p>
+                <p>2. 复制房间ID并分享给参与者</p>
+                <p>3. 在"奖项设置"中修改奖项名称和数量</p>
+                <p>4. 点击"开始抽奖"进行抽奖</p>
+                
+                <p><strong>参与者：</strong></p>
+                <p>1. 切换到"加入房间"标签页</p>
+                <p>2. 输入管理员提供的房间ID</p>
+                <p>3. 点击"加入"按钮参与抽奖</p>
+                <p>4. 等待管理员开始抽奖</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 房间和用户管理
+        let roomId = null;
+        let participants = [];
+        let currentUser = null;
+        let isAdmin = false;
+        
+        // 显示Toast提示
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+            
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+        
+        // 生成随机用户名
+        function generateRandomName() {
+            const adjectives = ['快乐', '聪明', '幸运', '勇敢', '阳光', '机智', '魅力', '无敌'];
+            const nouns = ['熊猫', '老虎', '狮子', '海豚', '猎豹', '凤凰', '巨龙', '麒麟'];
+            const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+            const noun = nouns[Math.floor(Math.random() * nouns.length)];
+            return adj + noun + Math.floor(Math.random() * 100);
+        }
+        
+        // 创建房间
+        function createRoom() {
+            // 生成房间ID
+            roomId = "ROOM-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+            document.getElementById('roomId').textContent = roomId;
+            document.getElementById('roomIdDisplay').style.display = 'flex';
+            
+            // 创建用户
+            currentUser = {
+                id: 'user-' + Date.now(),
+                name: generateRandomName(),
+                isAdmin: true
+            };
+            
+            // 添加到参与者列表
+            participants = [currentUser];
+            
+            // 更新UI
+            updateUI();
+            
+            // 显示创建成功消息
+            showToast(`${currentUser.name} 已创建房间！`);
+            showToast('您是管理员！可以设置奖项并开始抽奖');
+            
+            // 显示管理员面板
+            document.getElementById('adminSection').classList.remove('hidden');
+        }
+        
+        // 加入房间
+        function joinRoom() {
+            const inputRoomId = document.getElementById('roomIdInput').value.trim();
+            if (!inputRoomId) {
+                showToast('请输入房间ID');
+                return;
+            }
+            
+            // 模拟加入房间（在实际应用中这里会验证房间ID）
+            if (inputRoomId !== roomId) {
+                showToast('房间ID无效，请确认后重试');
+                return;
+            }
+            
+            // 创建用户
+            currentUser = {
+                id: 'user-' + Date.now(),
+                name: generateRandomName(),
+                isAdmin: false
+            };
+            
+            // 添加到参与者列表
+            participants.push(currentUser);
+            
+            // 更新UI
+            updateUI();
+            
+            // 显示加入成功消息
+            showToast(`${currentUser.name} 已加入房间！`);
+        }
+        
+        // 更新UI状态
+        function updateUI() {
+            if (!currentUser) return;
+            
+            // 更新用户信息
+            document.getElementById('userName').textContent = currentUser.name;
+            document.getElementById('userRole').textContent = currentUser.isAdmin ? '管理员' : '参与者';
+            document.getElementById('userRole').style.background = currentUser.isAdmin ? '#ff5e62' : '#38ef7d';
+            
+            // 更新连接状态
+            document.getElementById('statusDot').className = 'status-dot connected';
+            document.getElementById('connectionStatus').textContent = `已连接 ${participants.length}人`;
+            
+            // 显示统计区域
+            document.getElementById('statsSection').classList.remove('hidden');
+            
+            // 更新参与者数量
+            document.getElementById('participantCount').textContent = participants.length;
+            
+            // 渲染参与者网格
+            renderParticipantGrid();
+        }
+        
+        // 渲染参与者网格
+        function renderParticipantGrid() {
+            const grid = document.getElementById('participantGrid');
+            grid.innerHTML = '';
+            
+            participants.forEach(participant => {
+                const card = document.createElement('div');
+                card.className = 'participant-card';
+                card.innerHTML = `
+                    <div>${participant.name}</div>
+                    <small>${participant.isAdmin ? '👑 管理员' : '👤 参与者'}</small>
+                `;
+                grid.appendChild(card);
+            });
+        }
+        
+        // 开始抽奖
+        function startLottery() {
+            if (!isAdmin) return;
+            
+            // 获取所有奖项
+            const prizeItems = document.querySelectorAll('.prize-item');
+            const prizes = [];
+            prizeItems.forEach(item => {
+                const name = item.querySelector('.prize-name').value;
+                const count = parseInt(item.querySelector('.prize-count').value) || 1;
+                if (name) {
+                    prizes.push({name, count});
+                }
+            });
+            
+            if (prizes.length === 0) {
+                showToast('请至少设置一个奖项！');
+                return;
+            }
+            
+            // 更新奖项统计
+            document.getElementById('prizeCount').textContent = prizes.length;
+            const awardCount = prizes.reduce((sum, prize) => sum + prize.count, 0);
+            document.getElementById('awardCount').textContent = awardCount;
+            
+            // 清空中奖名单
+            const winnersContainer = document.getElementById('winnersContainer');
+            winnersContainer.innerHTML = '';
+            
+            // 添加抽奖中状态
+            const drawingElement = document.createElement('div');
+            drawingElement.className = 'winner-item';
+            drawingElement.innerHTML = `
+                <strong><i class="fas fa-spinner fa-spin"></i> 抽奖进行中...</strong>
+                <p>正在计算中奖结果，请稍候</p>
+            `;
+            winnersContainer.appendChild(drawingElement);
+            
+            // 模拟抽奖过程（2秒后显示结果）
+            setTimeout(() => {
+                winnersContainer.innerHTML = '';
+                
+                // 添加标题
+                const titleElement = document.createElement('div');
+                titleElement.className = 'winner-item';
+                titleElement.style.background = 'linear-gradient(to right, #ffecd2, #fcb69f)';
+                titleElement.innerHTML = '<strong><i class="fas fa-trophy"></i> 中奖名单公布</strong>';
+                winnersContainer.appendChild(titleElement);
+                
+                // 模拟中奖结果
+                let winnerIndex = 0;
+                prizes.forEach(prize => {
+                    const winnerElement = document.createElement('div');
+                    winnerElement.className = 'winner-item winner-highlight';
+                    
+                    // 显示中奖者
+                    const winnerNames = [];
+                    for (let i = 0; i < prize.count && winnerIndex < participants.length; i++) {
+                        winnerNames.push(participants[winnerIndex].name);
+                        winnerIndex++;
+                    }
+                    
+                    winnerElement.innerHTML = `
+                        <strong>${prize.name}:</strong> ${winnerNames.join('、')}
+                    `;
+                    winnersContainer.appendChild(winnerElement);
+                });
+                
+                showToast('抽奖完成！结果已同步给所有参与者');
+            }, 2000);
+        }
+        
+        // 重置抽奖
+        function resetLottery() {
+            if (!isAdmin) return;
+            
+            showToast('抽奖已重置！状态同步给所有参与者');
+            
+            // 重置奖项设置
+            document.getElementById('prizesContainer').innerHTML = `
+                <div class="prize-item">
+                    <input type="text" placeholder="一等奖（如：iPhone 15）" class="prize-name" value="一等奖">
+                    <input type="number" placeholder="数量" class="prize-count" min="1" value="1">
+                </div>
+                <div class="prize-item">
+                    <input type="text" placeholder="二等奖（如：AirPods Pro）" class="prize-name" value="二等奖">
+                    <input type="number" placeholder="数量" class="prize-count" min="1" value="2">
+                </div>
+            `;
+            
+            // 重置统计
+            document.getElementById('prizeCount').textContent = '0';
+            document.getElementById('awardCount').textContent = '0';
+            
+            // 重置中奖名单
+            const winnersContainer = document.getElementById('winnersContainer');
+            winnersContainer.innerHTML = `
+                <div class="winner-item">
+                    <strong><i class="fas fa-hourglass-half"></i> 等待开奖...</strong> 
+                    <p>抽奖结束后将在此处公布中奖名单</p>
+                </div>
+            `;
+        }
+        
+        // 页面初始化
+        function initPage() {
+            // 设置标签页切换
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // 移除所有active类
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // 添加active类到当前标签
+                    tab.classList.add('active');
+                    document.getElementById(tab.dataset.tab + 'Tab').classList.add('active');
+                });
+            });
+            
+            // 设置房间ID复制功能
+            document.getElementById('copyRoomId').addEventListener('click', () => {
+                navigator.clipboard.writeText(roomId);
+                showToast('房间ID已复制到剪贴板！');
+            });
+            
+            // 创建房间按钮
+            document.getElementById('createButton').addEventListener('click', createRoom);
+            
+            // 加入房间按钮
+            document.getElementById('joinButton').addEventListener('click', joinRoom);
+            
+            // 添加奖项按钮
+            document.getElementById('addPrize').addEventListener('click', () => {
+                const container = document.getElementById('prizesContainer');
+                const newPrize = document.createElement('div');
+                newPrize.className = 'prize-item';
+                newPrize.innerHTML = `
+                    <input type="text" placeholder="奖项名称" class="prize-name">
+                    <input type="number" placeholder="数量" class="prize-count" min="1" value="1">
+                `;
+                container.appendChild(newPrize);
+                showToast('已添加一个新奖项');
+            });
+            
+            // 抽奖按钮
+            document.getElementById('drawButton').addEventListener('click', startLottery);
+            
+            // 重置按钮
+            document.getElementById('resetButton').addEventListener('click', resetLottery);
+            
+            // 按回车加入房间
+            document.getElementById('roomIdInput').addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    joinRoom();
+                }
+            });
+        }
+        
+        // 页面加载完成后初始化
+        window.addEventListener('DOMContentLoaded', initPage);
+    </script>
+</body>
+</html>
